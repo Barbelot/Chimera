@@ -1,0 +1,133 @@
+﻿//https://www.shadertoy.com/view/4tGfDW
+//Chimera's Breath
+//by nimitz 2018 (twitter: @stormoid)
+
+/*
+    The main interest here is the addition of vorticity confinement with the curl stored in
+    the alpha channel of the simulation texture (which was not used in the paper)
+    this in turns allows for believable simulation of much lower viscosity fluids.
+    Without vorticity confinement, the fluids that can be simulated are much more akin to
+    thick oil.
+
+    Base Simulation based on the 2011 paper: "Simple and fast fluids"
+    (Martin Guay, Fabrice Colin, Richard Egli)
+    (https://hal.inria.fr/inria-00596050/document)
+
+    The actual simulation only requires one pass, Buffer A, B and C	are just copies
+    of each other to increase the simulation speed (3 simulation passes per frame)
+    and Buffer D is drawing colors on the simulated fluid
+    (could be using particles instead in a real scenario)
+*/
+
+#define NUM_THREADS_PER_GROUP 8
+
+#pragma kernel FluidInit
+#pragma kernel FluidUpdate
+#pragma kernel OutputUpdate
+
+const float K = 0.2;
+const float v = 0.55;
+
+float _AbsoluteTime;
+float _Dt;
+float _Vorticity;
+//Recommended values between 0.03 and 0.2
+//higher values simulate lower viscosity fluids (think billowing smoke)
+
+uint _FluidTextureWidth;
+uint _FluidTextureHeight;
+
+Texture2D<float4> _FluidTextureRead;
+RWTexture2D<float4> _FluidTextureWrite;
+
+Texture2D<float4> _OutputTextureRead;
+RWTexture2D<float4> _OutputTextureWrite;
+
+SamplerState linearClampSampler;
+
+///////////////////////// FUNCTIONS ////////////////////////////
+
+float Mag2(float2 p) { return dot(p, p); }
+
+float2 Point1(float t) {
+    t *= 0.62;
+    return float2(0.12, 0.5 + sin(t) * 0.2);
+}
+float2 Point2(float t) {
+    t *= 0.62;
+    return float2(0.88, 0.5 + cos(t + 1.5708) * 0.2);
+}
+
+float4 SolveFluid(Texture2D<float4> fluidTexture, float2 uv, float2 w, float time)
+{
+    float4 data = fluidTexture.SampleLevel(linearClampSampler, uv, 0);
+    float4 tr = fluidTexture.SampleLevel(linearClampSampler, uv + float2(w.x, 0), 0);
+    float4 tl = fluidTexture.SampleLevel(linearClampSampler, uv - float2(w.x, 0), 0);
+    float4 tu = fluidTexture.SampleLevel(linearClampSampler, uv + float2(0, w.y), 0);
+    float4 td = fluidTexture.SampleLevel(linearClampSampler, uv - float2(0, w.y), 0);
+
+    float3 dx = (tr.xyz - tl.xyz) * 0.5;
+    float3 dy = (tu.xyz - td.xyz) * 0.5;
+    float2 densDif = float2(dx.z, dy.z);
+
+    data.z -= _Dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
+    float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
+    float2 viscForce = float2(v, v) * laplacian;
+    data.xyw = fluidTexture.SampleLevel(linearClampSampler, uv - _Dt * data.xy * w, 0).xyw; //advection
+
+    float2 newForce = float2(0.0, 0.0);
+
+    newForce.xy += 0.75 * float2(.0003, 0.00015) / (Mag2(uv - Point1(time)) + 0.0001);
+    newForce.xy -= 0.75 * float2(.0003, 0.00015) / (Mag2(uv - Point2(time)) + 0.0001);
+
+    data.xy += _Dt * (viscForce.xy - K / _Dt * densDif + newForce); //update velocity
+    data.xy = max(float2(0.0, 0.0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
+
+    data.w = (tr.y - tl.y - tu.x + td.x);
+    float2 vort = float2(abs(tu.w) - abs(td.w), abs(tl.w) - abs(tr.w));
+    vort *= _Vorticity / length(vort + 1e-9) * data.w;
+    data.xy += vort;
+
+    data.x *= smoothstep(.5, .48, abs(uv.x - 0.5)); //Boundaries
+    data.y *= smoothstep(.5, .48, abs(uv.y - 0.5)); //Boundaries
+
+    data = clamp(data, float4(float2(-10.0, -10.0), 0.5, -10.), float4(float2(10.0, 10.0), 3.0, 10.));
+
+    return data;
+}
+
+///////////////////////// KERNELS ////////////////////////////
+
+[numthreads(NUM_THREADS_PER_GROUP, NUM_THREADS_PER_GROUP, 1)]
+void FluidInit(uint3 id : SV_DispatchThreadID)
+{
+	_FluidTextureWrite[id.xy] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+[numthreads(NUM_THREADS_PER_GROUP, NUM_THREADS_PER_GROUP, 1)]
+void FluidUpdate (uint3 id : SV_DispatchThreadID)
+{
+	float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
+    float2 uv = float2((float)id.x / _FluidTextureWidth, (float)id.y / _FluidTextureHeight);
+
+	_FluidTextureWrite[id.xy] = SolveFluid(_FluidTextureRead, uv, pixelSize, _AbsoluteTime);
+}
+
+[numthreads(NUM_THREADS_PER_GROUP, NUM_THREADS_PER_GROUP, 1)]
+void OutputUpdate(uint3 id : SV_DispatchThreadID)
+{
+	float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
+    float2 uv = float2((float)id.x / _FluidTextureWidth, (float)id.y / _FluidTextureHeight);
+
+    float4 fluidData = _FluidTextureRead.SampleLevel(linearClampSampler, uv, 0);
+
+	float4 outputColor = _OutputTextureRead.SampleLevel(linearClampSampler, uv - _Dt * pixelSize * fluidData.xy * 3., 0); //Advection
+
+	outputColor += .0025 / (0.0005 + pow(length(uv - Point1(_AbsoluteTime)), 1.75)) * _Dt * 0.12;
+	outputColor += .0025 / (0.0005 + pow(length(uv - Point2(_AbsoluteTime)), 1.75)) * _Dt * 0.12;
+
+	outputColor = clamp(outputColor, 0., 5.);
+	outputColor = max(outputColor - (0.0001 + outputColor * 0.004) * .5, 0.); //decay
+
+	_OutputTextureWrite[id.xy] = outputColor;
+}
