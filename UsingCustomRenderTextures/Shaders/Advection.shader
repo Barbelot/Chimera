@@ -12,21 +12,6 @@
 
 #include "UnityCustomRenderTexture.cginc"
 
-        //Chimera's Breath
-//by nimitz 2018 (twitter: @stormoid)
-
-/*
-    The main interest here is the addition of vorticity confinement with the curl stored in
-    the alpha channel of the simulation texture (which was not used in the paper)
-    this in turns allows for believable simulation of much lower viscosity fluids.
-    Without vorticity confinement, the fluids that can be simulated are much more akin to
-    thick oil.
-
-    Base Simulation based on the 2011 paper: "Simple and fast fluids"
-    (Martin Guay, Fabrice Colin, Richard Egli)
-    (https://hal.inria.fr/inria-00596050/document)
-*/
-
     sampler2D _FluidTex;
     float _dt;
     float _ConstantDecay;

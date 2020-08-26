@@ -1,25 +1,4 @@
-﻿//https://www.shadertoy.com/view/4tGfDW
-//Chimera's Breath
-//by nimitz 2018 (twitter: @stormoid)
-
-/*
-    The main interest here is the addition of vorticity confinement with the curl stored in
-    the alpha channel of the simulation texture (which was not used in the paper)
-    this in turns allows for believable simulation of much lower viscosity fluids.
-    Without vorticity confinement, the fluids that can be simulated are much more akin to
-    thick oil.
-
-    Base Simulation based on the 2011 paper: "Simple and fast fluids"
-    (Martin Guay, Fabrice Colin, Richard Egli)
-    (https://hal.inria.fr/inria-00596050/document)
-
-    The actual simulation only requires one pass, Buffer A, B and C	are just copies
-    of each other to increase the simulation speed (3 simulation passes per frame)
-    and Buffer D is drawing colors on the simulated fluid
-    (could be using particles instead in a real scenario)
-*/
-
-#define NUM_THREADS_PER_GROUP 8
+﻿#define NUM_THREADS_PER_GROUP 8
 
 #pragma kernel FluidInit
 #pragma kernel FluidUpdate
