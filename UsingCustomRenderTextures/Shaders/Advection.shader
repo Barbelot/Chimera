@@ -6,6 +6,7 @@
         _dt("dt", float) = 0.15
         _ConstantDecay("Constant Color Decay", float) = 0.00005
         _RelativeDecay("Relative Color Decay", float) = 0.002
+        //_DecayTargetIntensity("Decay Target Intensity", Range(0.0, 1.0)) = 0.0
     }
 
         CGINCLUDE
@@ -16,6 +17,7 @@
     float _dt;
     float _ConstantDecay;
     float _RelativeDecay;
+    //float _DecayTargetIntensity;
 
     struct Emitter {
         float2 position;
@@ -29,14 +31,6 @@
     StructuredBuffer<Emitter> _EmittersBuffer;
 
     float mag2(float2 p) { return dot(p, p); }
-    //float2 point1(float t) {
-    //    t *= 0.62;
-    //    return float2(0.12, 0.5 + sin(t) * 0.2);
-    //}
-    //float2 point2(float t) {
-    //    t *= 0.62;
-    //    return float2(0.88, 0.5 + cos(t + 1.5708) * 0.2);
-    //}
 
     float2x2 mm2(in float a) { float c = cos(a), s = sin(a); return float2x2(c, s, -s, c); }
 
@@ -54,11 +48,18 @@
             col += _EmittersBuffer[i].color * _EmittersBuffer[i].intensity * .0025 / (0.0005 + pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower)) * _dt;
         }
 
-        //col += .0025 / (0.0005 + pow(length(uv - point1(_Time.y)), 1.75)) * _dt * 0.12;
-        //col += .0025 / (0.0005 + pow(length(uv - point2(_Time.y)), 1.75)) * _dt * 0.12;
-
-        //col = clamp(col, 0., 5.);
+        /* Decay to zero */
         col = max(col - _ConstantDecay - col * _RelativeDecay, 0.); //decay
+
+        /* Decay to target intensity */
+        //if((col.r + col.g + col.b) / 3 > _DecayTargetIntensity){
+        //    col -= _ConstantDecay + col * _RelativeDecay; //decay
+        //}
+        //else {
+        //    col += _ConstantDecay + col * _RelativeDecay;
+        //}
+
+        //col = max(0, col);
 
         return col;
 	}
