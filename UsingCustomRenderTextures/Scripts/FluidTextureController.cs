@@ -38,12 +38,15 @@ public class FluidTextureController : MonoBehaviour
 			Initialize();
 	}
 
-	void FixedUpdate()
+	void Update()
     {
 		if (!_initialized) {
 			Initialize();
 			return;
 		}
+
+		//Update shader time
+		fluidMaterial.SetFloat("_AbsoluteTime", Time.time);
 
 		//Update emitters
 		UpdateEmittersBuffer();

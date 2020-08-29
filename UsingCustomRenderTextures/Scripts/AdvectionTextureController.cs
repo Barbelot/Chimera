@@ -39,7 +39,7 @@ public class AdvectionTextureController : MonoBehaviour
 			Initialize();
 	}
 
-	void FixedUpdate()
+	void Update()
     {
 		if (!_initialized) {
 			Initialize();
