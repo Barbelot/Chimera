@@ -7,12 +7,14 @@ public class FluidEmitter : MonoBehaviour
 	public enum PositionMapping { XY, XZ, YZ }
 	[Header("Position Mapping")]
 	public PositionMapping positionMapping = PositionMapping.XY;
+	[Tooltip("Size of your fluid area in meters.")] public Vector2 size = Vector2.one;
+	[Tooltip("Is your emitter centered on its origin ?")] public bool isCentered = false;
 
 	[Header("Fluid Emitter")]
 	public FluidTextureController fluidController;
 	public bool autoFindFluid = false;
 	public float force = 0.75f;
-	public float forceRadiusPower = 1.0f;
+	public float forceRadiusPower = 2.0f;
 
 	[Header("Color Emitter")]
 	public AdvectionTextureController advectionController;
@@ -86,22 +88,22 @@ public class FluidEmitter : MonoBehaviour
 
 		switch (positionMapping) {
 			case PositionMapping.XY:
-				position.x = transform.position.x;
-				position.y = transform.position.y;
+				position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
+				position.y = isCentered ? transform.position.y / size.y + 0.5f : transform.position.y / size.y;
 				_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.back);
 				direction.x = _direction3D.x;
 				direction.y = _direction3D.y;
 				break;
 			case PositionMapping.XZ:
-				position.x = transform.position.x;
-				position.y = transform.position.z;
+				position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
+				position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
 				_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
 				direction.x = _direction3D.x;
 				direction.y = _direction3D.z;
 				break;
 			case PositionMapping.YZ:
-				position.x = transform.position.y;
-				position.y = transform.position.z;
+				position.x = isCentered ? transform.position.y / size.x + 0.5f : transform.position.y / size.x;
+				position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
 				_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.right);
 				direction.x = _direction3D.y;
 				direction.y = _direction3D.z;
