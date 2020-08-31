@@ -18,9 +18,10 @@ public class FluidTextureController : MonoBehaviour
 		public Vector2 position;
 		public Vector2 direction;
 		public float force;
+		public float radiusPower;
 	}
 
-	private const int _fluidEmitterSize = 5 * sizeof(float);
+	private const int _fluidEmitterSize = 6 * sizeof(float);
 
 	private ComputeBuffer _emittersBuffer;
 	private List<FluidEmitter> _emittersList;
@@ -119,6 +120,7 @@ public class FluidTextureController : MonoBehaviour
 			_emittersArray[i].position = _emittersList[i].position;
 			_emittersArray[i].direction = _emittersList[i].direction;
 			_emittersArray[i].force = _emittersList[i].force;
+			_emittersArray[i].radiusPower = _emittersList[i].forceRadiusPower;
 		}
 	}
 

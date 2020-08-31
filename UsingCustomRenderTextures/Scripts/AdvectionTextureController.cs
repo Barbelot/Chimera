@@ -117,7 +117,7 @@ public class AdvectionTextureController : MonoBehaviour
 			_emittersArray[i].position = _emittersList[i].position;
 			_emittersArray[i].color = _emittersList[i].color;
 			_emittersArray[i].intensity = _emittersList[i].intensity;
-			_emittersArray[i].radiusPower = _emittersList[i].radiusPower;
+			_emittersArray[i].radiusPower = _emittersList[i].colorRadiusPower;
 		}
 	}
 

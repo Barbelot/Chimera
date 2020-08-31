@@ -12,13 +12,14 @@ public class FluidEmitter : MonoBehaviour
 	public FluidTextureController fluidController;
 	public bool autoFindFluid = false;
 	public float force = 0.75f;
+	public float forceRadiusPower = 1.0f;
 
 	[Header("Color Emitter")]
 	public AdvectionTextureController advectionController;
 	public bool autoFindAdvection = false;
 	public Color color = Color.white;
 	public float intensity = 0.12f;
-	public float radiusPower = 1.75f;
+	public float colorRadiusPower = 1.75f;
 
 	[Header("Gizmos")]
 	public bool showGizmos = true;

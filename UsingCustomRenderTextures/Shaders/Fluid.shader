@@ -22,6 +22,7 @@
 			float2 position;
 			float2 direction;
 			float force;
+			float radiusPower;
 		};
 
 		int _EmittersCount;
@@ -52,7 +53,7 @@
 
 			//Emitters
 			for (int i = 0; i < _EmittersCount; i++) {
-				newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (mag2(uv - _EmittersBuffer[i].position) + 0.0001);
+				newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
 			}
 
 			data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
@@ -71,7 +72,7 @@
 			return data;
 		}
 
-		half4 frag(v2f_customrendertexture i) : SV_Target
+		float4 frag(v2f_customrendertexture i) : SV_Target
 		{
 			float2 uv = i.globalTexcoord;
 
