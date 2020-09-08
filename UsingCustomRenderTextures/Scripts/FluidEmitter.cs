@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class FluidEmitter : MonoBehaviour
 {
+	public enum EmitterShape { Directional, Circular }
+	[Header("Shape")]
+	public EmitterShape shape = EmitterShape.Directional;
+
 	public enum PositionMapping { XY, XZ, YZ }
 	[Header("Position Mapping")]
 	public PositionMapping positionMapping = PositionMapping.XY;

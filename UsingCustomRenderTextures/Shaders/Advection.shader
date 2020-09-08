@@ -30,10 +30,6 @@
 
     StructuredBuffer<Emitter> _EmittersBuffer;
 
-    float mag2(float2 p) { return dot(p, p); }
-
-    float2x2 mm2(in float a) { float c = cos(a), s = sin(a); return float2x2(c, s, -s, c); }
-
 	half4 frag(v2f_customrendertexture i) : SV_Target
 	{
 		float2 uv = i.globalTexcoord;

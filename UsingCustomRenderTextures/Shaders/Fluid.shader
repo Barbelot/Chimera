@@ -25,13 +25,12 @@
 			float2 direction;
 			float force;
 			float radiusPower;
+			float shape;
 		};
 
 		int _EmittersCount;
 
 		StructuredBuffer<Emitter> _EmittersBuffer;
-
-		float mag2(float2 p) { return dot(p, p); }
 
 		float4 solveFluid(sampler2D smp, float2 uv, float2 w, float time)
 		{
@@ -55,7 +54,13 @@
 
 			//Emitters
 			for (int i = 0; i < _EmittersCount; i++) {
-				newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+				if (_EmittersBuffer[i].shape == 0) {
+					newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+				}
+				else {
+					newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+					//newForce *= length(uv - _EmittersBuffer[i].position) > 0.01 ? 1 : 0;
+				}
 			}
 
 			data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
