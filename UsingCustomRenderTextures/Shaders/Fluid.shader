@@ -54,6 +54,7 @@
 
 			//Emitters
 			for (int i = 0; i < _EmittersCount; i++) {
+
 				if (_EmittersBuffer[i].shape == 0) {
 					newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
 				}

@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class FluidTextureController : MonoBehaviour
 {
+	[Header("Fluid Controller ID")]
+	public string ID;
+
 	[Header("Custom Render Textures")]
 	public CustomRenderTexture fluidTexture;
 
@@ -25,7 +28,7 @@ public class FluidTextureController : MonoBehaviour
 	private const int _fluidEmitterSize = 7 * sizeof(float);
 
 	private ComputeBuffer _emittersBuffer;
-	private List<FluidEmitter> _emittersList;
+	public List<FluidEmitter> _emittersList;
 	private Emitter[] _emittersArray;
 
 	private Material fluidMaterial;

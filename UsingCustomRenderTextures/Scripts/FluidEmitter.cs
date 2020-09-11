@@ -15,14 +15,12 @@ public class FluidEmitter : MonoBehaviour
 	[Tooltip("Is your emitter centered on its origin ?")] public bool isCentered = false;
 
 	[Header("Fluid Emitter")]
-	public FluidTextureController fluidController;
-	public bool autoFindFluid = false;
+	public string fluidControllerID;
 	public float force = 0.75f;
 	public float forceRadiusPower = 2.0f;
 
 	[Header("Color Emitter")]
-	public AdvectionTextureController advectionController;
-	public bool autoFindAdvection = false;
+	public string advectionControllerID;
 	public Color color = Color.white;
 	public float intensity = 0.12f;
 	public float colorRadiusPower = 1.75f;
@@ -32,6 +30,9 @@ public class FluidEmitter : MonoBehaviour
 
 	[HideInInspector] public Vector2 position = Vector2.zero;
 	[HideInInspector] public Vector2 direction = Vector2.one * 0.1f;
+
+	private FluidTextureController _fluidController;
+	private AdvectionTextureController _advectionController;
 
 	private Vector3 _direction3D = Vector3.zero;
 
@@ -75,17 +76,23 @@ public class FluidEmitter : MonoBehaviour
 
 	void AddEmitter() {
 
-		if (autoFindFluid)
-			fluidController = FindObjectOfType<FluidTextureController>();
+		foreach(var controller in FindObjectsOfType<FluidTextureController>()) {
+			if (controller.ID == fluidControllerID) {
+				_fluidController = controller; break;
+			}
+		}
 
-		if (fluidController)
-			fluidController.AddEmitter(this);
+		if (_fluidController)
+			_fluidController.AddEmitter(this);
 
-		if (autoFindAdvection)
-			advectionController = FindObjectOfType<AdvectionTextureController>();
+		foreach (var controller in FindObjectsOfType<AdvectionTextureController>()) {
+			if (controller.ID == advectionControllerID) {
+				_advectionController = controller; break;
+			}
+		}
 
-		if (advectionController)
-			advectionController.AddEmitter(this);
+		if (_advectionController)
+			_advectionController.AddEmitter(this);
 	}
 
 	void UpdateEmitter() {
@@ -117,10 +124,10 @@ public class FluidEmitter : MonoBehaviour
 
 	void RemoveEmitter() {
 
-		if(fluidController)
-			fluidController.RemoveEmitter(this);
+		if(_fluidController)
+			_fluidController.RemoveEmitter(this);
 
-		if (advectionController)
-			advectionController.RemoveEmitter(this);
+		if (_advectionController)
+			_advectionController.RemoveEmitter(this);
 	}
 }

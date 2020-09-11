@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class AdvectionTextureController : MonoBehaviour
 {
+	[Header("Advection Controller ID")]
+	public string ID;
+
 	[Header("Custom Render Textures")]
 	public CustomRenderTexture advectionTexture;
 
@@ -24,7 +27,7 @@ public class AdvectionTextureController : MonoBehaviour
 	private const int _advectionEmitterSize = 8 * sizeof(float);
 
 	private ComputeBuffer _emittersBuffer;
-	private List<FluidEmitter> _emittersList;
+	public List<FluidEmitter> _emittersList;
 	private Emitter[] _emittersArray;
 
 	private Material advectionMaterial;
