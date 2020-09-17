@@ -4,153 +4,156 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FluidController : MonoBehaviour
+namespace Chimera
 {
-	[Header("Compute Shader")]
-	public ComputeShader fluidCompute;
+	public class FluidController : MonoBehaviour
+	{
+		[Header("Compute Shader")]
+		public ComputeShader fluidCompute;
 
-	[Header("Textures Settings")]
-	public Vector2Int textureSize = Vector2Int.one * 2048;
+		[Header("Textures Settings")]
+		public Vector2Int textureSize = Vector2Int.one * 2048;
 
-	[Header("Fluid Settings")]
-	public int updatesPerFrameCount = 1;
-	public float dt = 0.15f;
-	[Range(0.03f, 0.2f)] public float vorticity = 0.11f;
+		[Header("Fluid Settings")]
+		public int updatesPerFrameCount = 1;
+		public float dt = 0.15f;
+		[Range(0.03f, 0.2f)] public float vorticity = 0.11f;
 
-	private RenderTexture _fluidTextureRead, _fluidTextureWrite, _outputTextureRead, _outputTextureWrite;
+		private RenderTexture _fluidTextureRead, _fluidTextureWrite, _outputTextureRead, _outputTextureWrite;
 
-	private int _fluidInitKernel;
-	private int _fluidUpdateKernel;
-	private int _outputUpdateKernel;
+		private int _fluidInitKernel;
+		private int _fluidUpdateKernel;
+		private int _outputUpdateKernel;
 
-	private int _numThreadsPerGroup = 8;
-	private Vector2Int _numThreadGroup;
+		private int _numThreadsPerGroup = 8;
+		private Vector2Int _numThreadGroup;
 
-	private bool _initialized = false;
+		private bool _initialized = false;
 
-	#region MonoBehaviour Functions
+		#region MonoBehaviour Functions
 
-	private void OnEnable() {
+		private void OnEnable() {
 
-		if (!_initialized)
-			Initialize();
-	}
-
-	private void Update() {
-
-		if (!_initialized)
-			Initialize();
-
-		for (int i = 0; i < updatesPerFrameCount; i++) {
-			//Update fluid
-			UpdateFluid();
-
-			//Update output
-			UpdateOutput();
+			if (!_initialized)
+				Initialize();
 		}
-	}
 
-	#endregion
+		private void Update() {
 
-	public RenderTexture GetFluidTexture() {
+			if (!_initialized)
+				Initialize();
 
-		if (!_initialized)
-			Initialize();
+			for (int i = 0; i < updatesPerFrameCount; i++) {
+				//Update fluid
+				UpdateFluid();
 
-		return _fluidTextureRead;
-	}
+				//Update output
+				UpdateOutput();
+			}
+		}
 
-	public RenderTexture GetOutputTexture() {
+		#endregion
 
-		if (!_initialized)
-			Initialize();
+		public RenderTexture GetFluidTexture() {
 
-		return _outputTextureRead;
-	}
+			if (!_initialized)
+				Initialize();
 
-	void Initialize() {
+			return _fluidTextureRead;
+		}
 
-		//Create textures
-		CreateFluidTextures();
-		CreateOutputTexture();
+		public RenderTexture GetOutputTexture() {
 
-		//Initialize compute shader
-		InitializeComputeShaderParameters();
+			if (!_initialized)
+				Initialize();
 
-		//Initialize fluid
-		InitializeFluid();
+			return _outputTextureRead;
+		}
 
-		_initialized = true;
-	}
+		void Initialize() {
 
-	void CreateFluidTextures() {
+			//Create textures
+			CreateFluidTextures();
+			CreateOutputTexture();
 
-		_fluidTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
-		_fluidTextureRead.enableRandomWrite = true;
-		_fluidTextureRead.Create();
+			//Initialize compute shader
+			InitializeComputeShaderParameters();
 
-		_fluidTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
-		_fluidTextureWrite.enableRandomWrite = true;
-		_fluidTextureWrite.Create();
-	}
+			//Initialize fluid
+			InitializeFluid();
 
-	void CreateOutputTexture() {
+			_initialized = true;
+		}
 
-		_outputTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
-		_outputTextureRead.enableRandomWrite = true;
-		_outputTextureRead.Create();
+		void CreateFluidTextures() {
 
-		_outputTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
-		_outputTextureWrite.enableRandomWrite = true;
-		_outputTextureWrite.Create();
-	}
+			_fluidTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_fluidTextureRead.enableRandomWrite = true;
+			_fluidTextureRead.Create();
 
-	void InitializeComputeShaderParameters() {
+			_fluidTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_fluidTextureWrite.enableRandomWrite = true;
+			_fluidTextureWrite.Create();
+		}
 
-		//Get kernels indices
-		_fluidInitKernel = fluidCompute.FindKernel("FluidInit");
-		_fluidUpdateKernel = fluidCompute.FindKernel("FluidUpdate");
-		_outputUpdateKernel = fluidCompute.FindKernel("OutputUpdate");
+		void CreateOutputTexture() {
 
-		//Compute thread group size
-		_numThreadGroup = new Vector2Int(textureSize.x / _numThreadsPerGroup, textureSize.y / _numThreadsPerGroup);
-	}
+			_outputTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_outputTextureRead.enableRandomWrite = true;
+			_outputTextureRead.Create();
 
-	void InitializeFluid() {
+			_outputTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_outputTextureWrite.enableRandomWrite = true;
+			_outputTextureWrite.Create();
+		}
 
-		fluidCompute.SetInt("_FluidTextureWidth", textureSize.x);
-		fluidCompute.SetInt("_FluidTextureHeight", textureSize.y);
-		fluidCompute.SetTexture(_fluidInitKernel, "_FluidTextureRead", _fluidTextureRead);
-		fluidCompute.SetTexture(_fluidInitKernel, "_FluidTextureWrite", _fluidTextureWrite);
+		void InitializeComputeShaderParameters() {
 
-		fluidCompute.Dispatch(_fluidInitKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
+			//Get kernels indices
+			_fluidInitKernel = fluidCompute.FindKernel("FluidInit");
+			_fluidUpdateKernel = fluidCompute.FindKernel("FluidUpdate");
+			_outputUpdateKernel = fluidCompute.FindKernel("OutputUpdate");
 
-		Graphics.CopyTexture(_fluidTextureWrite, _fluidTextureRead);
-	}
+			//Compute thread group size
+			_numThreadGroup = new Vector2Int(textureSize.x / _numThreadsPerGroup, textureSize.y / _numThreadsPerGroup);
+		}
 
-	void UpdateFluid() {
+		void InitializeFluid() {
 
-		fluidCompute.SetTexture(_fluidUpdateKernel, "_FluidTextureRead", _fluidTextureRead);
-		fluidCompute.SetTexture(_fluidUpdateKernel, "_FluidTextureWrite", _fluidTextureWrite);
-		fluidCompute.SetFloat("_AbsoluteTime", Time.time);
-		fluidCompute.SetFloat("_Dt", dt);
-		fluidCompute.SetFloat("_Vorticity", vorticity);
+			fluidCompute.SetInt("_FluidTextureWidth", textureSize.x);
+			fluidCompute.SetInt("_FluidTextureHeight", textureSize.y);
+			fluidCompute.SetTexture(_fluidInitKernel, "_FluidTextureRead", _fluidTextureRead);
+			fluidCompute.SetTexture(_fluidInitKernel, "_FluidTextureWrite", _fluidTextureWrite);
 
-		fluidCompute.Dispatch(_fluidUpdateKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
+			fluidCompute.Dispatch(_fluidInitKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
 
-		Graphics.CopyTexture(_fluidTextureWrite, _fluidTextureRead);
-	}
+			Graphics.CopyTexture(_fluidTextureWrite, _fluidTextureRead);
+		}
 
-	void UpdateOutput() {
+		void UpdateFluid() {
 
-		fluidCompute.SetTexture(_outputUpdateKernel, "_OutputTextureRead", _outputTextureRead);
-		fluidCompute.SetTexture(_outputUpdateKernel, "_OutputTextureWrite", _outputTextureWrite);
-		fluidCompute.SetTexture(_outputUpdateKernel, "_FluidTextureRead", _fluidTextureRead);
-		fluidCompute.SetFloat("_AbsoluteTime", Time.time);
-		fluidCompute.SetFloat("_Dt", dt);
+			fluidCompute.SetTexture(_fluidUpdateKernel, "_FluidTextureRead", _fluidTextureRead);
+			fluidCompute.SetTexture(_fluidUpdateKernel, "_FluidTextureWrite", _fluidTextureWrite);
+			fluidCompute.SetFloat("_AbsoluteTime", Time.time);
+			fluidCompute.SetFloat("_Dt", dt);
+			fluidCompute.SetFloat("_Vorticity", vorticity);
 
-		fluidCompute.Dispatch(_outputUpdateKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
+			fluidCompute.Dispatch(_fluidUpdateKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
 
-		Graphics.CopyTexture(_outputTextureWrite, _outputTextureRead);
+			Graphics.CopyTexture(_fluidTextureWrite, _fluidTextureRead);
+		}
+
+		void UpdateOutput() {
+
+			fluidCompute.SetTexture(_outputUpdateKernel, "_OutputTextureRead", _outputTextureRead);
+			fluidCompute.SetTexture(_outputUpdateKernel, "_OutputTextureWrite", _outputTextureWrite);
+			fluidCompute.SetTexture(_outputUpdateKernel, "_FluidTextureRead", _fluidTextureRead);
+			fluidCompute.SetFloat("_AbsoluteTime", Time.time);
+			fluidCompute.SetFloat("_Dt", dt);
+
+			fluidCompute.Dispatch(_outputUpdateKernel, _numThreadGroup.x, _numThreadGroup.y, 1);
+
+			Graphics.CopyTexture(_outputTextureWrite, _outputTextureRead);
+		}
 	}
 }

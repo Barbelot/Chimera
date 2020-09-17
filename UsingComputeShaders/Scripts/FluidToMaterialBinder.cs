@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FluidToMaterialBinder : MonoBehaviour
+namespace Chimera
 {
-    public FluidController fluidController;
-    public Material material;
-    public string property;
-
-    void OnEnable()
+    public class FluidToMaterialBinder : MonoBehaviour
     {
-        material.SetTexture(property, fluidController.GetOutputTexture());
+        public FluidController fluidController;
+        public Material material;
+        public string property;
+
+        void OnEnable() {
+            material.SetTexture(property, fluidController.GetOutputTexture());
+        }
     }
 }
