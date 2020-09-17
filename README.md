@@ -67,7 +67,7 @@ The emitter can create velocity in the linked FluidController texture and/or add
 
 ## Known Issues
 
-Compute shader implementation is not functional.
+- Compute shader implementation is not functional.
 
 ## Acknowledgments
 
