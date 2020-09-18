@@ -1,13 +1,13 @@
 # Chimera
 
 <p float="left">
-  <img src="https://i.imgur.com/a1IjR8z.png" width="473" />
-  <img src="https://i.imgur.com/mZV2fNd.png" width="473" /> 
+  <img src="https://i.imgur.com/a1IjR8z.png" width="400" />
+  <img src="https://i.imgur.com/mZV2fNd.png" width="400" /> 
 </p>
 
 <p float="left">
-  <img src="https://i.imgur.com/FGbvVrF.jpeg" width="473" />
-  <img src="https://i.imgur.com/eObGy3T.png" width="473" /> 
+  <img src="https://i.imgur.com/FGbvVrF.jpeg" width="400" />
+  <img src="https://i.imgur.com/eObGy3T.png" width="400" /> 
 </p>
 
 ## Presentation
