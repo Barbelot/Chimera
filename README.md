@@ -1,13 +1,13 @@
 # Chimera
 
 <p float="left">
-  <img src="https://i.imgur.com/a1IjR8z.png" width="473" />
-  <img src="https://i.imgur.com/mZV2fNd.png" width="473" /> 
+  <img src="https://i.imgur.com/a1IjR8z.png" width="400" />
+  <img src="https://i.imgur.com/mZV2fNd.png" width="400" /> 
 </p>
 
 <p float="left">
-  <img src="https://i.imgur.com/FGbvVrF.jpeg" width="473" />
-  <img src="https://i.imgur.com/eObGy3T.png" width="473" /> 
+  <img src="https://i.imgur.com/FGbvVrF.jpeg" width="400" />
+  <img src="https://i.imgur.com/eObGy3T.png" width="400" /> 
 </p>
 
 ## Presentation
@@ -30,7 +30,9 @@ Chimera is a 2D fluid simulation framework in Unity based on [Nimitz's implement
 
 ## Disclaimer
 
-This framework is a **work in progress**, things may change (a lot) or not alway work as expected. 
+This framework is a **work in progress**, things may change (a lot) or not alway work as expected.
+
+The compute shader implementation is not functional for now, you can delete the UsingComputeShaders folder safely.
 
 ## Description
 
