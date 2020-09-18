@@ -30,7 +30,9 @@ Chimera is a 2D fluid simulation framework in Unity based on [Nimitz's implement
 
 ## Disclaimer
 
-This framework is a **work in progress**, things may change (a lot) or not alway work as expected. 
+This framework is a **work in progress**, things may change (a lot) or not alway work as expected.
+
+The compute shader implementation is not functional for now, you can delete the UsingComputeShaders folder safely.
 
 ## Description
 
