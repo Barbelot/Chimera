@@ -34,6 +34,8 @@
 			col *= fluidData.z * _Multiplier;
 		} else  if (_Channel <= 4) {
 			col *= fluidData.w * _Multiplier;
+		} else {
+			col = fluidData * _Multiplier;
 		}
 
         return col;

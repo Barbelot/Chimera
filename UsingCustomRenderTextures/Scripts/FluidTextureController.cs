@@ -30,7 +30,7 @@ namespace Chimera
 		private const int _fluidEmitterSize = 7 * sizeof(float);
 
 		private ComputeBuffer _emittersBuffer;
-		public List<FluidEmitter> _emittersList;
+		private List<FluidEmitter> _emittersList;
 		private Emitter[] _emittersArray;
 
 		private Material fluidMaterial;

@@ -29,7 +29,7 @@ namespace Chimera
 		private const int _advectionEmitterSize = 8 * sizeof(float);
 
 		private ComputeBuffer _emittersBuffer;
-		public List<FluidEmitter> _emittersList;
+		private List<FluidEmitter> _emittersList;
 		private Emitter[] _emittersArray;
 
 		private Material advectionMaterial;

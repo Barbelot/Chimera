@@ -127,7 +127,7 @@ Material:
     - _AlphaSrcBlend: 1
     - _Anisotropy: 0
     - _BlendMode: 0
-    - _Channel: 2.7
+    - _Channel: 5
     - _CoatMask: 0
     - _CullMode: 2
     - _CullModeForward: 2
@@ -182,7 +182,7 @@ Material:
     - _LinkDetailsWithBase: 1
     - _MaterialID: 1
     - _Metallic: 0
-    - _Multiplier: 0.18
+    - _Multiplier: 1
     - _NormalMapSpace: 0
     - _NormalScale: 1
     - _PPDLodThreshold: 5
