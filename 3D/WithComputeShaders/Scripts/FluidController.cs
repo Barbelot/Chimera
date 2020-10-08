@@ -19,6 +19,9 @@ namespace Chimera
 		public float dt = 0.15f;
 		[Range(0.03f, 0.2f)] public float vorticity = 0.11f;
 
+		[Header("Debug")]
+		public bool update;
+
 		private RenderTexture _fluidTextureRead, _fluidTextureWrite, _outputTextureRead, _outputTextureWrite;
 
 		private int _fluidInitKernel;
@@ -46,9 +49,14 @@ namespace Chimera
 			for (int i = 0; i < updatesPerFrameCount; i++) {
 				//Update fluid
 				UpdateFluid();
+			}
 
-				//Update output
-				UpdateOutput();
+			//Update output
+			UpdateOutput();
+
+			if (update) {
+				UpdateFluid();
+				update = false;
 			}
 		}
 
@@ -87,22 +95,22 @@ namespace Chimera
 
 		void CreateFluidTextures() {
 
-			_fluidTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_fluidTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
 			_fluidTextureRead.enableRandomWrite = true;
 			_fluidTextureRead.Create();
 
-			_fluidTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_fluidTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
 			_fluidTextureWrite.enableRandomWrite = true;
 			_fluidTextureWrite.Create();
 		}
 
 		void CreateOutputTexture() {
 
-			_outputTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_outputTextureRead = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
 			_outputTextureRead.enableRandomWrite = true;
 			_outputTextureRead.Create();
 
-			_outputTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat);
+			_outputTextureWrite = new RenderTexture(textureSize.x, textureSize.y, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
 			_outputTextureWrite.enableRandomWrite = true;
 			_outputTextureWrite.Create();
 		}
