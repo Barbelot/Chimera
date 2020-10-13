@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FluidSurface
+  m_Name: Fluid3DSurface
   m_Shader: {fileID: -6465566751694194690, guid: b60efeb57280587448644cba57c85618,
     type: 3}
   m_ShaderKeywords: 
@@ -40,19 +40,19 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - AdvectionTexture:
-        m_Texture: {fileID: 8600000, guid: 8d6a13aac34480041b4fd8a804e0d5e1, type: 2}
+        m_Texture: {fileID: 8600000, guid: e9a7ae238a00cdb418d6d4461d689aa7, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - BaseColorMap:
-        m_Texture: {fileID: 8600000, guid: 8d6a13aac34480041b4fd8a804e0d5e1, type: 2}
+        m_Texture: {fileID: 8600000, guid: e9a7ae238a00cdb418d6d4461d689aa7, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - EmissionMap:
-        m_Texture: {fileID: 8600000, guid: 8d6a13aac34480041b4fd8a804e0d5e1, type: 2}
+        m_Texture: {fileID: 8600000, guid: e9a7ae238a00cdb418d6d4461d689aa7, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - FluidTexture:
-        m_Texture: {fileID: 8600000, guid: cec4d160a6622ca43bbd0b1ccd8581cc, type: 2}
+        m_Texture: {fileID: 8600000, guid: 09398fc8d89b7464a9151466b2f19fda, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AdvectionTexture:
@@ -162,10 +162,10 @@ Material:
     m_Floats:
     - Alpha: 1
     - ColorDisplacementFromNormal: 0
-    - DisplacementStrength: 0.021
+    - DisplacementStrength: 0.01
     - Metallic: 0.805
     - NormalOffset: 0.1
-    - NormalStrength: 100
+    - NormalStrength: 200
     - Smoothness: 0.619
     - _AORemapMax: 1
     - _AORemapMin: 0

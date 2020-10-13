@@ -37,20 +37,18 @@ float2 Point2(float t) {
     return float2(0.88, 0.5 + cos(t + 1.5708) * 0.2);
 }
 
-float4 SampleTexture(Texture2D<float4> textureToSample, float2 uv, float2 pixelSize) {
+float4 SampleTexture(Texture2D<float4> textureToSample, float2 uv) {
 
-    float2 uvOffset = float2(lerp(0.5f, -0.5f, uv.x), lerp(0.5f, -0.5f, uv.y));
-
-    return textureToSample.SampleLevel(linearClampSampler, uv + uvOffset * pixelSize, 0);
+    return textureToSample.SampleLevel(linearClampSampler, uv, 0);
 }
 
 float4 SolveFluid(Texture2D<float4> fluidTexture, float2 uv, float2 w, float time)
 {
-    float4 data = SampleTexture(fluidTexture, uv, w);
-    float4 tr = SampleTexture(fluidTexture, uv + float2(w.x, 0), w);
-    float4 tl = SampleTexture(fluidTexture, uv - float2(w.x, 0), w);
-    float4 tu = SampleTexture(fluidTexture, uv + float2(0, w.y), w);
-    float4 td = SampleTexture(fluidTexture, uv - float2(0, w.y), w);
+    float4 data = SampleTexture(fluidTexture, uv);
+    float4 tr = SampleTexture(fluidTexture, uv + float2(w.x, 0));
+    float4 tl = SampleTexture(fluidTexture, uv - float2(w.x, 0));
+    float4 tu = SampleTexture(fluidTexture, uv + float2(0, w.y));
+    float4 td = SampleTexture(fluidTexture, uv - float2(0, w.y));
 
     float3 dx = (tr.xyz - tl.xyz) * 0.5;
     float3 dy = (tu.xyz - td.xyz) * 0.5;
@@ -59,12 +57,12 @@ float4 SolveFluid(Texture2D<float4> fluidTexture, float2 uv, float2 w, float tim
     data.z -= _Dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
     float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
     float2 viscForce = float2(v, v) * laplacian;
-    data.xyw = SampleTexture(fluidTexture, uv - _Dt * data.xy * w, w).xyw; //advection
+    data.xyw = SampleTexture(fluidTexture, uv - _Dt * data.xy * w).xyw; //advection
 
     float2 newForce = float2(0.0, 0.0);
 
     newForce.xy += 0.75 * float2(.0003, 0.00015) / (Mag2(uv - Point1(time)) + 0.0001);
-    //newForce.xy -= 0.75 * float2(.0003, 0.00015) / (Mag2(uv - Point2(time)) + 0.0001);
+    ////newForce.xy -= 0.75 * float2(.0003, 0.00015) / (Mag2(uv - Point2(time)) + 0.0001);
 
     data.xy += _Dt * (viscForce.xy - K / _Dt * densDif + newForce); //update velocity
     data.xy = max(float2(0.0, 0.0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
@@ -87,7 +85,8 @@ float4 SolveFluid(Texture2D<float4> fluidTexture, float2 uv, float2 w, float tim
 [numthreads(NUM_THREADS_PER_GROUP, NUM_THREADS_PER_GROUP, 1)]
 void FluidInit(uint3 id : SV_DispatchThreadID)
 {
-    //float2 uv = float2((float)id.x / (_FluidTextureWidth - 1), (float)id.y / (_FluidTextureHeight - 1));
+    //float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
+    //float2 uv = float2((float)id.x / _FluidTextureWidth, (float)id.y / _FluidTextureHeight) + 0.5 * pixelSize;
 	//_FluidTextureWrite[id.xy] = float4(uv.x, uv.y, 0.0f, 1.0f);
 
     _FluidTextureWrite[id.xy] = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -97,21 +96,21 @@ void FluidInit(uint3 id : SV_DispatchThreadID)
 void FluidUpdate (uint3 id : SV_DispatchThreadID)
 {
 	float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
-    float2 uv = float2((float)id.x / (_FluidTextureWidth-1), (float)id.y / (_FluidTextureHeight-1));
+    float2 uv = float2((float)id.x / _FluidTextureWidth, (float)id.y / _FluidTextureHeight) + 0.5 * pixelSize;
 
 	_FluidTextureWrite[id.xy] = SolveFluid(_FluidTextureRead, uv, pixelSize, _AbsoluteTime);
-    //_FluidTextureWrite[id.xy] = SampleTexture(_FluidTextureRead, uv, pixelSize);
+    //_FluidTextureWrite[id.xy] = SampleTexture(_FluidTextureRead, uv);
 }
 
 [numthreads(NUM_THREADS_PER_GROUP, NUM_THREADS_PER_GROUP, 1)]
 void OutputUpdate(uint3 id : SV_DispatchThreadID)
 {
-	float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
-    float2 uv = float2((float)id.x / (_FluidTextureWidth-1), (float)id.y / (_FluidTextureHeight-1));
+    float2 pixelSize = float2(1.0f / _FluidTextureWidth, 1.0f / _FluidTextureHeight);
+    float2 uv = float2((float)id.x / _FluidTextureWidth, (float)id.y / _FluidTextureHeight) + 0.5 * pixelSize;
 
-    float4 fluidData = SampleTexture(_FluidTextureRead, uv, pixelSize);
+    float4 fluidData = SampleTexture(_FluidTextureRead, uv);
 
-	float4 outputColor = SampleTexture(_OutputTextureRead, uv - _Dt * pixelSize * fluidData.xy * 3., pixelSize); //Advection
+	float4 outputColor = SampleTexture(_OutputTextureRead, uv - _Dt * pixelSize * fluidData.xy * 3.); //Advection
 
 	outputColor += .0025 / (0.0005 + pow(length(uv - Point1(_AbsoluteTime)), 1.75)) * _Dt * 0.12;
 	outputColor += .0025 / (0.0005 + pow(length(uv - Point2(_AbsoluteTime)), 1.75)) * _Dt * 0.12;

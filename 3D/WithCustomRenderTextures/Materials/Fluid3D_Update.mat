@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Fluid_Update
-  m_Shader: {fileID: 4800000, guid: fe226f31ae7dec441a9a2b6fcdb2a67f, type: 3}
+  m_Name: Fluid3D_Update
+  m_Shader: {fileID: 4800000, guid: 7af0b432e041a284485bc2064f9eedf8, type: 3}
   m_ShaderKeywords: _NORMALMAP_TANGENT_SPACE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -28,7 +28,7 @@ Material:
     - _K: 0.2
     - _VelocityAttenuation: 0
     - _Viscosity: 0.55
-    - _Vorticity: 0.1
+    - _Vorticity: 0.11
     - _dt: 0.15
     m_Colors: []
 --- !u!114 &4630554423636812818
