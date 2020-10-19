@@ -35,9 +35,10 @@
 		float PackFloats(float a, float b) {
 
 			//Packing
-			uint aScaled = a * 65535.0f;
-			uint bScaled = b * 65535.0f;
-			uint abPacked = (aScaled << 16) | (bScaled & 0xFFFF);
+			uint a16 = f32tof16(a);
+			uint b16 = f32tof16(b);
+			uint abPacked = (a16 << 16) | b16;
+
 			return asfloat(abPacked);
 		}
 
@@ -45,8 +46,8 @@
 
 			//Unpacking
 			uint uintInput = asuint(input);
-			a = (uintInput >> 16) / 65535.0f;
-			b = (uintInput & 0xFFFF) / 65535.0f;
+			a = f16tof32(uintInput >> 16);
+			b = f16tof32(uintInput);
 		}
 
 		float4 SampleBilinear(sampler2D smp, float2 uv) {
@@ -121,15 +122,9 @@
 			UnpackFloat(texel.w, density, vorticity);
 		}
 
-		float4 solveFluid(sampler2D smp, float2 uv, float2 w, float time)
+		/******* Float packing attempt **********
+		float4 solveFluid2D(sampler2D smp, float2 uv, float2 w, float time)
 		{
-
-			//float4 data = SampleBilinear(smp, uv);
-			//float4 tr = SampleBilinear(smp, uv + float2(w.x, 0));
-			//float4 tl = SampleBilinear(smp, uv - float2(w.x, 0));
-			//float4 tu = SampleBilinear(smp, uv + float2(0, w.y));
-			//float4 td = SampleBilinear(smp, uv - float2(0, w.y));
-
 			float2 velocity, trVelocity, tlVelocity, tuVelocity, tdVelocity;
 			float density, trDensity, tlDensity, tuDensity, tdDensity;
 			float vorticity, trVorticity, tlVorticity, tuVorticity, tdVorticity;
@@ -165,7 +160,6 @@
 				}
 				else {
 					newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
-					//newForce *= length(uv - _EmittersBuffer[i].position) > 0.01 ? 1 : 0;
 				}
 			}
 
@@ -189,17 +183,177 @@
 
 			return float4(velocity, 0, PackFloats(density, vorticity));
 		}
+		***********************/
+
+		float4 solveFluid2D(sampler2D smp, float2 uv, float2 w, float time)
+		{
+
+			float4 data = tex2D(smp, uv);
+
+			float4 tr = tex2D(smp, uv + float2(w.x, 0));
+			float4 tl = tex2D(smp, uv - float2(w.x, 0));
+			float4 tu = tex2D(smp, uv + float2(0, w.y));
+			float4 td = tex2D(smp, uv - float2(0, w.y));
+
+			float4 trr = tex2D(smp, uv + 2.0 * float2(w.x, 0));
+			float4 tuu = tex2D(smp, uv + 2.0 * float2(0, w.y));
+			float4 tdd = tex2D(smp, uv - 2.0 * float2(0, w.y));
+			float4 tll = tex2D(smp, uv - 2.0 * float2(w.x, 0));
+
+			float4 tru = tex2D(smp, uv + float2(w.x, w.y));
+			float4 trd = tex2D(smp, uv + float2(w.x, -w.y));
+			float4 tlu = tex2D(smp, uv + float2(-w.x, w.y));
+			float4 tld = tex2D(smp, uv + float2(-w.x, -w.y));
+
+			//Curl
+			float curl = tr.y - tl.y - tu.x + td.x;
+			float trCurl = trr.y - data.y - tru.x + trd.x;
+			float tlCurl = data.y - tll.y - tlu.x + tld.x;
+			float tuCurl = tru.y - tlu.y - tuu.x + data.x;
+			float tdCurl = trd.y - tld.y - data.x + tdd.x;
+
+			float3 dx = (tr.xyz - tl.xyz) * 0.5;
+			float3 dy = (tu.xyz - td.xyz) * 0.5;
+			float2 densDif = float2(dx.z, dy.z);
+
+			data.z -= _dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
+			float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
+			float2 viscForce = float2(_Viscosity, _Viscosity) * laplacian;
+			data.xyw = tex2D(smp, uv - _dt * data.xy * w).xyw; //advection
+
+			float2 newForce = float2(0, 0);
+
+			//Emitters
+			for (int i = 0; i < _EmittersCount; i++) {
+
+				if (_EmittersBuffer[i].shape == 0) {
+					newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+				}
+				else {
+					newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+					//newForce *= length(uv - _EmittersBuffer[i].position) > 0.01 ? 1 : 0;
+				}
+			}
+
+			data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
+			data.xy = max(float2(0, 0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
+
+			//Vorticity confinment
+			//float2 vort = float2(abs(tu.w) - abs(td.w), abs(tl.w) - abs(tr.w)); 
+			float2 vort = float2(abs(tuCurl) - abs(tdCurl), abs(tlCurl) - abs(trCurl));
+			vort *= _Vorticity / length(vort + 1e-9) * curl;
+			data.xy += vort;
+
+			data.x *= smoothstep(.5, .49, abs(uv.x - 0.5));
+			data.y *= smoothstep(.5, .49, abs(uv.y - 0.5)); //Boundaries
+
+			data.xy *= (1.0f - _VelocityAttenuation);
+
+			data = clamp(data, float4(float2(-10, -10), 0.5, -10.), float4(float2(10, 10), 3.0, 10.));
+
+			return data;
+		}
+
+		float4 solveFluid3D(sampler3D smp, float3 uv, float3 w, float time)
+		{
+
+			float4 data = tex3D(smp, uv);
+
+			float4 tr = tex3D(smp, uv + float3(w.x, 0, 0));
+			float4 tl = tex3D(smp, uv - float3(w.x, 0, 0));
+			float4 tu = tex3D(smp, uv + float3(0, w.y, 0));
+			float4 td = tex3D(smp, uv - float3(0, w.y, 0));
+			float4 tb = tex3D(smp, uv + float3(0, 0, w.z));
+			float4 tf = tex3D(smp, uv - float3(0, 0, w.z));
+
+			float4 trr = tex3D(smp, uv + 2.0 * float3(w.x, 0, 0));
+			float4 tll = tex3D(smp, uv - 2.0 * float3(w.x, 0, 0));
+			float4 tuu = tex3D(smp, uv + 2.0 * float3(0, w.y, 0));
+			float4 tdd = tex3D(smp, uv - 2.0 * float3(0, w.y, 0));
+			float4 tbb = tex3D(smp, uv + 2.0 * float3(0, 0, w.z));
+			float4 tff = tex3D(smp, uv - 2.0 * float3(0, 0, w.z));
+
+			float4 tru = tex3D(smp, uv + float3(w.x, w.y, 0));
+			float4 trd = tex3D(smp, uv + float3(w.x, -w.y, 0));
+			float4 tlu = tex3D(smp, uv + float3(-w.x, w.y, 0));
+			float4 tld = tex3D(smp, uv + float3(-w.x, -w.y, 0));
+
+			//float4 truf = tex3D(smp, uv + float3(w.x, w.y, -w.z));
+			//float4 trdf = tex3D(smp, uv + float3(w.x, -w.y, -w.z));
+			//float4 tluf = tex3D(smp, uv + float3(-w.x, w.y, -w.z));
+			//float4 tldf = tex3D(smp, uv + float3(-w.x, -w.y, -w.z));
+			float4 trf = tex3D(smp, uv + float3(w.x, 0, -w.z));
+			float4 tlf = tex3D(smp, uv + float3(-w.x, 0, -w.z));
+			float4 tuf = tex3D(smp, uv + float3(0, w.y, -w.z));
+			float4 tdf = tex3D(smp, uv + float3(0, -w.y, -w.z));
+
+			//float4 trub = tex3D(smp, uv + float3(w.x, w.y, w.z));
+			//float4 trdb = tex3D(smp, uv + float3(w.x, -w.y, w.z));
+			//float4 tlub = tex3D(smp, uv + float3(-w.x, w.y, w.z));
+			//float4 tldb = tex3D(smp, uv + float3(-w.x, -w.y, w.z));
+			float4 trb = tex3D(smp, uv + float3(w.x, 0, w.z));
+			float4 tlb = tex3D(smp, uv + float3(-w.x, 0, w.z));
+			float4 tub = tex3D(smp, uv + float3(0, w.y, w.z));
+			float4 tdb = tex3D(smp, uv + float3(0, -w.y, w.z));
+
+			//Curl
+			float curl = tr.y - tl.y - tu.x + td.x;
+			float trCurl = trr.y - data.y - tru.x + trd.x;
+			float tlCurl = data.y - tll.y - tlu.x + tld.x;
+			float tuCurl = tru.y - tlu.y - tuu.x + data.x;
+			float tdCurl = trd.y - tld.y - data.x + tdd.x;
+
+			//float3 dx = (tr.xyz - tl.xyz) * 0.5;
+			//float3 dy = (tu.xyz - td.xyz) * 0.5;
+			//float2 densDif = float2(dx.z, dy.z);
+
+			//data.z -= _dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
+			//float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
+			//float2 viscForce = float2(_Viscosity, _Viscosity) * laplacian;
+			//data.xyw = tex2D(smp, uv - _dt * data.xy * w).xyw; //advection
+
+			//float2 newForce = float2(0, 0);
+
+			////Emitters
+			//for (int i = 0; i < _EmittersCount; i++) {
+
+			//	if (_EmittersBuffer[i].shape == 0) {
+			//		newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+			//	}
+			//	else {
+			//		newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+			//	}
+			//}
+
+			//data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
+			//data.xy = max(float2(0, 0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
+
+			//Vorticity confinment
+			float2 vort = float2(abs(tuCurl) - abs(tdCurl), abs(tlCurl) - abs(trCurl));
+			//vort *= _Vorticity / length(vort + 1e-9) * curl;
+			//data.xy += vort;
+
+			//data.x *= smoothstep(.5, .49, abs(uv.x - 0.5));
+			//data.y *= smoothstep(.5, .49, abs(uv.y - 0.5)); //Boundaries
+
+			//data.xy *= (1.0f - _VelocityAttenuation);
+
+			//data = clamp(data, float4(float2(-10, -10), 0.5, -10.), float4(float2(10, 10), 3.0, 10.));
+
+			return data;
+		}
 
 		float4 frag(v2f_customrendertexture i) : SV_Target
 		{
-			float2 uv = i.globalTexcoord;
+			float3 uv = i.globalTexcoord;
 
 			float tw = 1.0f / _CustomRenderTextureWidth;
 			float th = 1.0f / _CustomRenderTextureHeight;
+			float td = 1.0f / _CustomRenderTextureDepth;
 
-			float4 fluidOutput = solveFluid(_SelfTexture2D, uv, float2(tw, th), _AbsoluteTime);
-
-			return fluidOutput;
+			//return solveFluid2D(_SelfTexture2D, uv.xy, float2(tw, th), _AbsoluteTime);
+			return solveFluid3D(_SelfTexture3D, uv, float3(tw, th, td), _AbsoluteTime);
+			return float4(uv, 1);
 		}
 
 			ENDCG
