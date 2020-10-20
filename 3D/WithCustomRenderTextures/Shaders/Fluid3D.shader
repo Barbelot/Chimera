@@ -297,15 +297,28 @@
 			float4 tdb = tex3D(smp, uv + float3(0, -w.y, w.z));
 
 			//Curl
-			float curl = tr.y - tl.y - tu.x + td.x;
-			float trCurl = trr.y - data.y - tru.x + trd.x;
-			float tlCurl = data.y - tll.y - tlu.x + tld.x;
-			float tuCurl = tru.y - tlu.y - tuu.x + data.x;
-			float tdCurl = trd.y - tld.y - data.x + tdd.x;
+			//float curl = tr.y - tl.y - tu.x + td.x;
+			//float trCurl = trr.y - data.y - tru.x + trd.x;
+			//float tlCurl = data.y - tll.y - tlu.x + tld.x;
+			//float tuCurl = tru.y - tlu.y - tuu.x + data.x;
+			//float tdCurl = trd.y - tld.y - data.x + tdd.x;
+
+			//!\ TEXTURE3D uv.z is going front to back but normalized frame as Z axis going from back to front (with X going right and Y up) 
+
+			float3 curl = float3(tu.z - td.z - tf.y + tb.y, tf.x - tb.x - tr.z + tl.z, tr.y - tl.y - tu.x + td.x);
+			float3 trCurl;
+			float3 tlCurl;
+			float3 tuCurl;
+			float3 tdCurl;
+			float3 tfCurl;
+			float3 tbCurl;
+
 
 			//float3 dx = (tr.xyz - tl.xyz) * 0.5;
 			//float3 dy = (tu.xyz - td.xyz) * 0.5;
 			//float2 densDif = float2(dx.z, dy.z);
+
+
 
 			//data.z -= _dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
 			//float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
@@ -329,9 +342,13 @@
 			//data.xy = max(float2(0, 0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
 
 			//Vorticity confinment
-			float2 vort = float2(abs(tuCurl) - abs(tdCurl), abs(tlCurl) - abs(trCurl));
+			//float2 vort = float2(abs(tuCurl) - abs(tdCurl), abs(tlCurl) - abs(trCurl));
 			//vort *= _Vorticity / length(vort + 1e-9) * curl;
 			//data.xy += vort;
+
+			float3 gradCurlNorm = float3(length(trCurl) - length(tlCurl), length(tuCurl) - length(tdCurl), length(tfCurl) - length(tbCurl));
+			float3 sourceVorticity = cross(gradCurlNorm / length(gradCurlNorm + 1e-9), curl) * _Vorticity; ///// SHOULD BE MULTIPLIED BY DT ? (cf paper)
+			data.xyz += sourceVorticity;
 
 			//data.x *= smoothstep(.5, .49, abs(uv.x - 0.5));
 			//data.y *= smoothstep(.5, .49, abs(uv.y - 0.5)); //Boundaries

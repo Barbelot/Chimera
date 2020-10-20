@@ -78,3 +78,4 @@ Tested in 2019.4.12f1.
 - [Nimitz](https://twitter.com/stormoid) for his shadertoy example.
 - Fluid simulation based on [Simple and fast fluids](https://hal.inria.fr/inria-00596050/document) by Martin Guay, Fabrice Colin and Richard Egli.
 - Ben Golus for his valuable help on Unity Forums.
+- Sylvia Wilhelm for her help, thoughts and remarks on the fluid equations.
