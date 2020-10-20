@@ -32,7 +32,9 @@ Chimera is a 2D fluid simulation framework in Unity based on [Nimitz's implement
 
 This framework is a **work in progress**, things may change (a lot) or not alway work as expected.
 
-The 3D implementation is not functional for now, you can delete the 3D folder safely.
+The 3D implementation is not functional for now, you can delete the 3D folders safely.
+
+The 2D example scene works in HDRP since it uses HDRP materials and Visual Effect Graph, but the framework should work in any pipeline.
 
 ## Description
 
@@ -67,11 +69,12 @@ The forward axis of the emitter object is used to determine 2D emitter direction
 
 The emitter can create velocity in the linked FluidController texture and/or add color in the linked AdvectionController texture.
 
-## Known Issues
+## Version
 
-- 3D implementation is not functional.
+Tested in 2019.4.12f1.
 
 ## Acknowledgments
 
 - [Nimitz](https://twitter.com/stormoid) for his shadertoy example.
 - Fluid simulation based on [Simple and fast fluids](https://hal.inria.fr/inria-00596050/document) by Martin Guay, Fabrice Colin and Richard Egli.
+- Ben Golus for his valuable help on Unity Forums.
