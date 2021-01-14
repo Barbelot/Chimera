@@ -10,10 +10,8 @@ namespace Chimera
 		[Header("Shape")]
 		public EmitterShape shape = EmitterShape.Directional;
 
-		public enum PositionMapping { XY, XZ, YZ }
 		[Header("Position Mapping")]
-		public PositionMapping positionMapping = PositionMapping.XY;
-		[Tooltip("Size of your fluid area in meters.")] public Vector2 size = Vector2.one;
+		[Tooltip("Size of your fluid area in meters.")] public Vector3 size = Vector3.one;
 		[Tooltip("Is your emitter centered on its origin ?")] public bool isCentered = false;
 
 		[Header("Fluid Emitter")]
@@ -30,13 +28,11 @@ namespace Chimera
 		[Header("Gizmos")]
 		public bool showGizmos = true;
 
-		[HideInInspector] public Vector2 position = Vector2.zero;
-		[HideInInspector] public Vector2 direction = Vector2.one * 0.1f;
+		[HideInInspector] public Vector3 position = Vector3.zero;
+		[HideInInspector] public Vector3 direction = Vector3.one * 0.1f;
 
 		private Fluid3DTextureController _fluidController;
 		private Advection3DTextureController _advectionController;
-
-		private Vector3 _direction3D = Vector3.zero;
 
 		private void OnEnable() {
 
@@ -61,19 +57,7 @@ namespace Chimera
 
 			Gizmos.color = Color.yellow;
 
-			switch (positionMapping) {
-				case PositionMapping.XY:
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.back);
-					break;
-				case PositionMapping.XZ:
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-					break;
-				case PositionMapping.YZ:
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.right);
-					break;
-			}
-
-			Gizmos.DrawLine(transform.position, transform.position + _direction3D * force * 0.5f);
+			Gizmos.DrawLine(transform.position, transform.position + transform.forward * force * 0.5f);
 		}
 
 		void AddEmitter() {
@@ -99,29 +83,10 @@ namespace Chimera
 
 		void UpdateEmitter() {
 
-			switch (positionMapping) {
-				case PositionMapping.XY:
-					position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
-					position.y = isCentered ? transform.position.y / size.y + 0.5f : transform.position.y / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.back);
-					direction.x = _direction3D.x;
-					direction.y = _direction3D.y;
-					break;
-				case PositionMapping.XZ:
-					position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
-					position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-					direction.x = _direction3D.x;
-					direction.y = _direction3D.z;
-					break;
-				case PositionMapping.YZ:
-					position.x = isCentered ? transform.position.y / size.x + 0.5f : transform.position.y / size.x;
-					position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.right);
-					direction.x = _direction3D.y;
-					direction.y = _direction3D.z;
-					break;
-			}
+			position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
+			position.y = isCentered ? transform.position.y / size.y + 0.5f : transform.position.y / size.y;
+			position.z = isCentered ? transform.position.z / size.z + 0.5f : transform.position.z / size.z;
+			direction = transform.forward;
 		}
 
 		void RemoveEmitter() {

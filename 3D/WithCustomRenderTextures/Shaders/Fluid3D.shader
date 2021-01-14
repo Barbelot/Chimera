@@ -21,8 +21,8 @@
 		float _VelocityAttenuation;
 
 		struct Emitter {
-			float2 position;
-			float2 direction;
+			float3 position;
+			float3 direction;
 			float force;
 			float radiusPower;
 			float shape;
@@ -257,7 +257,7 @@
 		float4 solveFluid3D(sampler3D smp, float3 uv, float3 w, float time)
 		{
 
-			float4 data = tex3D(smp, uv);
+			float4 t = tex3D(smp, uv);
 
 			float4 tr = tex3D(smp, uv + float3(w.x, 0, 0));
 			float4 tl = tex3D(smp, uv - float3(w.x, 0, 0));
@@ -297,67 +297,61 @@
 			float4 tdb = tex3D(smp, uv + float3(0, -w.y, w.z));
 
 			//Curl
-			//float curl = tr.y - tl.y - tu.x + td.x;
-			//float trCurl = trr.y - data.y - tru.x + trd.x;
-			//float tlCurl = data.y - tll.y - tlu.x + tld.x;
-			//float tuCurl = tru.y - tlu.y - tuu.x + data.x;
-			//float tdCurl = trd.y - tld.y - data.x + tdd.x;
-
 			//!\ TEXTURE3D uv.z is going front to back but normalized frame as Z axis going from back to front (with X going right and Y up) 
 
-			float3 curl = float3(tu.z - td.z - tf.y + tb.y, tf.x - tb.x - tr.z + tl.z, tr.y - tl.y - tu.x + td.x);
-			float3 trCurl;
-			float3 tlCurl;
-			float3 tuCurl;
-			float3 tdCurl;
-			float3 tfCurl;
-			float3 tbCurl;
+			float3 tCurl = float3(tu.z - td.z - tf.y + tb.y, tf.x - tb.x - tr.z + tl.z, tr.y - tl.y - tu.x + td.x);
+			float3 trCurl = float3(tru.z - trd.z - trf.y + trb.y, trf.x - trb.x - trr.z + t.z, trr.y - t.y - tru.x + trd.x);
+			float3 tlCurl = float3(tlu.z - tld.z - tlf.y + tlb.y, tlf.x - tlb.x - t.z + tll.z, t.y - tll.y - tlu.x + tld.x);
+			float3 tuCurl = float3(tuu.z - t.z - tuf.y + tub.y, tuf.x - tub.x - tru.z + tlu.z, tru.y - tlu.y - tuu.x + t.x);;
+			float3 tdCurl = float3(t.z - tdd.z - tdf.y + tdb.y, tdf.x - tdb.x - trd.z + tld.z, trd.y - tld.y - t.x + tdd.x);;
+			float3 tfCurl = float3(tuf.z - tdf.z - tff.y + t.y, tff.x - t.x - trf.z + tlf.z, trf.y - tlf.y - tuf.x + tdf.x);
+			float3 tbCurl = float3(tub.z - tdb.z - t.y + tbb.y, t.x - tbb.x - trb.z + tlb.z, trb.y - tlb.y - tub.x + tdb.x);
+
+			//Differences
+			float4 dx = (tr - tl) * 0.5;
+			float4 dy = (tu - td) * 0.5;
+			float4 dz = (tf - tb) * 0.5;
+			float3 densDif = float3(dx.w, dy.w, dz.w);
 
 
-			//float3 dx = (tr.xyz - tl.xyz) * 0.5;
-			//float3 dy = (tu.xyz - td.xyz) * 0.5;
-			//float2 densDif = float2(dx.z, dy.z);
+			t.w -= _dt * dot(float4(densDif, dx.x + dy.y + dz.z), t); //density
+			float3 laplacian = tu.xyz + td.xyz + tr.xyz + tl.xyz + tb.xyz + tf.xyz - 6.0 * t.xyz;
+			float3 viscForce = float3(_Viscosity, _Viscosity, _Viscosity) * laplacian;
 
+			t.xyz = tex3D(smp, uv - _dt * t.xyz * w).xyz; //advection
 
+			float3 newForce = float3(0, 0, 0);
+			newForce += 0.75 * float3(.0000, 0.003, 0.0000) / (pow(length(uv - float3(0.5, 0.5, 0.5)), 1.75) + 0.0001);
 
-			//data.z -= _dt * dot(float3(densDif, dx.x + dy.y), data.xyz); //density
-			//float2 laplacian = tu.xy + td.xy + tr.xy + tl.xy - 4.0 * data.xy;
-			//float2 viscForce = float2(_Viscosity, _Viscosity) * laplacian;
-			//data.xyw = tex2D(smp, uv - _dt * data.xy * w).xyw; //advection
-
-			//float2 newForce = float2(0, 0);
-
-			////Emitters
+			//Emitters
 			//for (int i = 0; i < _EmittersCount; i++) {
 
 			//	if (_EmittersBuffer[i].shape == 0) {
-			//		newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+			//		newForce += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
 			//	}
 			//	else {
-			//		newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
+			//		newForce += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
 			//	}
 			//}
 
-			//data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
-			//data.xy = max(float2(0, 0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
+			t.xyz += _dt * (viscForce - _K / _dt * densDif + newForce); //update velocity
+			t.xyz = max(float3(0, 0, 0), abs(t.xyz) - 1e-4) * sign(t.xyz); //linear velocity decay
 
 			//Vorticity confinment
-			//float2 vort = float2(abs(tuCurl) - abs(tdCurl), abs(tlCurl) - abs(trCurl));
-			//vort *= _Vorticity / length(vort + 1e-9) * curl;
-			//data.xy += vort;
+			//float3 gradCurlNorm = float3(length(trCurl) - length(tlCurl), length(tuCurl) - length(tdCurl), length(tfCurl) - length(tbCurl));
+			//float3 sourceVorticity = cross(gradCurlNorm / length(gradCurlNorm + 1e-9), tCurl) * _Vorticity; ///// SHOULD BE MULTIPLIED BY DT ? (cf paper)
+			//t.xyz += sourceVorticity;
 
-			float3 gradCurlNorm = float3(length(trCurl) - length(tlCurl), length(tuCurl) - length(tdCurl), length(tfCurl) - length(tbCurl));
-			float3 sourceVorticity = cross(gradCurlNorm / length(gradCurlNorm + 1e-9), curl) * _Vorticity; ///// SHOULD BE MULTIPLIED BY DT ? (cf paper)
-			data.xyz += sourceVorticity;
+			//Boundaries
+			t.x *= smoothstep(.5, .49, abs(uv.x - 0.5));
+			t.y *= smoothstep(.5, .49, abs(uv.y - 0.5));
+			t.z *= smoothstep(.5, .49, abs(uv.z - 0.5));
 
-			//data.x *= smoothstep(.5, .49, abs(uv.x - 0.5));
-			//data.y *= smoothstep(.5, .49, abs(uv.y - 0.5)); //Boundaries
+			t.xyz *= (1.0f - _VelocityAttenuation);
 
-			//data.xy *= (1.0f - _VelocityAttenuation);
+			t = clamp(t, float4(float3(-10, -10, -10), 0.5), float4(float3(10, 10, 10), 3.0));
 
-			//data = clamp(data, float4(float2(-10, -10), 0.5, -10.), float4(float2(10, 10), 3.0, 10.));
-
-			return data;
+			return t;
 		}
 
 		float4 frag(v2f_customrendertexture i) : SV_Target
@@ -370,7 +364,8 @@
 
 			//return solveFluid2D(_SelfTexture2D, uv.xy, float2(tw, th), _AbsoluteTime);
 			return solveFluid3D(_SelfTexture3D, uv, float3(tw, th, td), _AbsoluteTime);
-			return float4(uv, 1);
+
+			//return float4(uv, 1);
 		}
 
 			ENDCG

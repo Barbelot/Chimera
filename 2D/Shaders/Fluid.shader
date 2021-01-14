@@ -7,11 +7,20 @@
         _dt("dt", float) = 0.15
         _Vorticity("Vorticity", float) = 0.11
 		_VelocityAttenuation("Velocity Attenuation", Range(0,1)) = 0
+		[Space]
+		_NoiseIntensity("Noise Intensity", float) = 0
+		_NoiseScale("Noise Scale", float) = 1
+		_NoiseSpeed("Noise Speed", Vector) = (0, 0, 0.1)
+		_NoiseOctaveNumber("Noise Octave Number", int) = 3
+		_NoiseOctaveScale("Noise Octave Scale", float) = 2
+		_NoiseOctaveAttenuation("Noise Octave Attenuation", float) = 0.5
+
     }
 
         CGINCLUDE
 
 #include "UnityCustomRenderTexture.cginc"
+#include "../../Includes/SimplexNoise3D.hlsl"
 
         float _AbsoluteTime;
         float _K;           //Gas state constant
@@ -19,6 +28,13 @@
         float _dt;
 		float _Vorticity;   //Recommended values between 0.03 and 0.2, higher values simulate lower viscosity fluids (think billowing smoke)
 		float _VelocityAttenuation;
+
+		float _NoiseIntensity;
+		float _NoiseScale;
+		float3 _NoiseSpeed;
+		uint _NoiseOctaveNumber;
+		float _NoiseOctaveScale;
+		float _NoiseOctaveAttenuation;
 
 		struct Emitter {
 			float2 position;
@@ -32,7 +48,7 @@
 
 		StructuredBuffer<Emitter> _EmittersBuffer;
 
-		float4 solveFluid(sampler2D smp, float2 uv, float2 w, float time)
+		float4 solveFluid(sampler2D smp, float2 uv, float2 w)
 		{
 
 			float4 data = tex2D(smp, uv);
@@ -64,6 +80,9 @@
 				}
 			}
 
+			//Noise
+			newForce += _NoiseIntensity * SimplexNoiseGradient_Octaves(float3(uv, 0), _NoiseScale, _NoiseSpeed, _NoiseOctaveNumber, _NoiseOctaveScale, _NoiseOctaveAttenuation, _AbsoluteTime).xy;
+
 			data.xy += _dt * (viscForce.xy - _K / _dt * densDif + newForce); //update velocity
 			data.xy = max(float2(0, 0), abs(data.xy) - 1e-4) * sign(data.xy); //linear velocity decay
 
@@ -89,7 +108,7 @@
 			float tw = 1.0f / _CustomRenderTextureWidth;
 			float th = 1.0f / _CustomRenderTextureHeight;
 
-			float4 fluidOutput = solveFluid(_SelfTexture2D, uv, float2(tw, th), _AbsoluteTime);
+			float4 fluidOutput = solveFluid(_SelfTexture2D, uv, float2(tw, th));
 
 			return fluidOutput;
 		}

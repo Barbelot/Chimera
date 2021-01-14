@@ -7,17 +7,34 @@
         _ConstantDecay("Constant Color Decay", float) = 0.00005
         _RelativeDecay("Relative Color Decay", float) = 0.002
         //_DecayTargetIntensity("Decay Target Intensity", Range(0.0, 1.0)) = 0.0
+
+        [Space]
+        _NoiseIntensity("Noise Intensity", float) = 0
+        _NoiseScale("Noise Scale", float) = 1
+        _NoiseSpeed("Noise Speed", Vector) = (0, 0, 0.1)
+        _NoiseOctaveNumber("Noise Octave Number", int) = 3
+        _NoiseOctaveScale("Noise Octave Scale", float) = 2
+        _NoiseOctaveAttenuation("Noise Octave Attenuation", float) = 0.5
     }
 
         CGINCLUDE
 
 #include "UnityCustomRenderTexture.cginc"
+#include "../../Includes/SimplexNoise3D.hlsl"
 
     sampler2D _FluidTex;
+        float _AbsoluteTime;
     float _dt;
     float _ConstantDecay;
     float _RelativeDecay;
     //float _DecayTargetIntensity;
+
+    float _NoiseIntensity;
+    float _NoiseScale;
+    float3 _NoiseSpeed;
+    uint _NoiseOctaveNumber;
+    float _NoiseOctaveScale;
+    float _NoiseOctaveAttenuation;
 
     struct Emitter {
         float2 position;
@@ -43,6 +60,9 @@
         for (int i = 0; i < _EmittersCount; i++) {
             col += _EmittersBuffer[i].color * _EmittersBuffer[i].intensity * .0025 / (0.0005 + pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower)) * _dt;
         }
+
+        //Noise
+        col += _NoiseIntensity * abs(SimplexNoise_Octaves(float3(uv, 0), _NoiseScale, _NoiseSpeed, _NoiseOctaveNumber, _NoiseOctaveScale, _NoiseOctaveAttenuation, _AbsoluteTime));
 
         /* Decay to zero */
         col = max(col - _ConstantDecay - col * _RelativeDecay, 0.); //decay

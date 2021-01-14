@@ -20,14 +20,14 @@ namespace Chimera
 
 		public struct Emitter
 		{
-			public Vector2 position;
-			public Vector2 direction;
+			public Vector3 position;
+			public Vector3 direction;
 			public float force;
 			public float radiusPower;
 			public float shape;
 		}
 
-		private const int _fluidEmitterSize = 7 * sizeof(float);
+		private const int _fluidEmitterSize = 9 * sizeof(float);
 
 		private ComputeBuffer _emittersBuffer;
 		private List<Fluid3DEmitter> _emittersList;

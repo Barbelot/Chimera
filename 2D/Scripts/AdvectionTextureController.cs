@@ -50,6 +50,9 @@ namespace Chimera
 				return;
 			}
 
+			//Update shader time
+			advectionMaterial.SetFloat("_AbsoluteTime", Time.time);
+
 			//Update emitters
 			UpdateEmittersBuffer();
 

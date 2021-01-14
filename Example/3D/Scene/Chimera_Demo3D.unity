@@ -297,7 +297,7 @@ MonoBehaviour:
       enableBigTilePrepass: 0
       isFptlEnabled: 0
   clearColorMode: 1
-  backgroundColorHDR: {r: 0, g: 0, b: 0, a: 0}
+  backgroundColorHDR: {r: 1, g: 0, b: 0, a: 0}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -1142,8 +1142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  positionMapping: 0
-  size: {x: 1, y: 1}
+  size: {x: 1, y: 1, z: 1}
   isCentered: 1
   fluidControllerID: Main
   force: 0.1
@@ -1153,8 +1152,8 @@ MonoBehaviour:
   intensity: 0.12
   colorRadiusPower: 1.75
   showGizmos: 1
-  position: {x: 0, y: 0}
-  direction: {x: 0.1, y: 0.1}
+  position: {x: 0, y: 0, z: 0}
+  direction: {x: 0.1, y: 0.1, z: 0.1}
 --- !u!4 &543450652152123816
 Transform:
   m_ObjectHideFlags: 0

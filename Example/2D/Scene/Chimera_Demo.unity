@@ -387,7 +387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: Main
   fluidTexture: {fileID: 8600000, guid: cec4d160a6622ca43bbd0b1ccd8581cc, type: 2}
-  updatesPerFrame: 4
+  updatesPerFrame: 0
   reinitialize: 0
 --- !u!114 &994727779
 MonoBehaviour:
