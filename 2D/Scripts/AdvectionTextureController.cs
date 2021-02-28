@@ -29,7 +29,7 @@ namespace Chimera
 		private const int _advectionEmitterSize = 8 * sizeof(float);
 
 		private ComputeBuffer _emittersBuffer;
-		private List<FluidEmitter> _emittersList;
+		private List<FluidEmitter2D> _emittersList;
 		private Emitter[] _emittersArray;
 
 		private Material advectionMaterial;
@@ -94,7 +94,7 @@ namespace Chimera
 
 		void CreateEmittersList() {
 
-			_emittersList = new List<FluidEmitter>();
+			_emittersList = new List<FluidEmitter2D>();
 		}
 
 		void CreateEmittersArray() {
@@ -140,7 +140,7 @@ namespace Chimera
 			_emittersBuffer.Release();
 		}
 
-		public void AddEmitter(FluidEmitter emitter) {
+		public void AddEmitter(FluidEmitter2D emitter) {
 
 			if (!_initialized)
 				Initialize();
@@ -150,7 +150,7 @@ namespace Chimera
 			CreateEmittersBuffer();
 		}
 
-		public void RemoveEmitter(FluidEmitter emitter) {
+		public void RemoveEmitter(FluidEmitter2D emitter) {
 
 			_emittersList.Remove(emitter);
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Chimera
 {
-	public class FluidEmitter : MonoBehaviour
+	public class FluidEmitter2D : MonoBehaviour
 	{
 		public enum EmitterShape { Directional, Circular }
 		[Header("Shape")]

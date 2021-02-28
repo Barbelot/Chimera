@@ -30,7 +30,7 @@ namespace Chimera
 		private const int _fluidEmitterSize = 7 * sizeof(float);
 
 		private ComputeBuffer _emittersBuffer;
-		private List<FluidEmitter> _emittersList;
+		private List<FluidEmitter2D> _emittersList;
 		private Emitter[] _emittersArray;
 
 		private Material fluidMaterial;
@@ -98,7 +98,7 @@ namespace Chimera
 
 		void CreateEmittersList() {
 
-			_emittersList = new List<FluidEmitter>();
+			_emittersList = new List<FluidEmitter2D>();
 		}
 
 		void CreateEmittersArray() {
@@ -126,7 +126,7 @@ namespace Chimera
 				_emittersArray[i].direction = _emittersList[i].direction;
 				_emittersArray[i].force = _emittersList[i].force;
 				_emittersArray[i].radiusPower = _emittersList[i].forceRadiusPower;
-				_emittersArray[i].shape = _emittersList[i].shape == FluidEmitter.EmitterShape.Directional ? 0 : 1;
+				_emittersArray[i].shape = _emittersList[i].shape == FluidEmitter2D.EmitterShape.Directional ? 0 : 1;
 			}
 		}
 
@@ -145,7 +145,7 @@ namespace Chimera
 			_emittersBuffer.Release();
 		}
 
-		public void AddEmitter(FluidEmitter emitter) {
+		public void AddEmitter(FluidEmitter2D emitter) {
 
 			if (!_initialized)
 				Initialize();
@@ -155,7 +155,7 @@ namespace Chimera
 			CreateEmittersBuffer();
 		}
 
-		public void RemoveEmitter(FluidEmitter emitter) {
+		public void RemoveEmitter(FluidEmitter2D emitter) {
 
 			_emittersList.Remove(emitter);
 
