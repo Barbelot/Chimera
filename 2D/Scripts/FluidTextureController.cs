@@ -69,7 +69,8 @@ namespace Chimera
 
 		private void OnDisable() {
 
-			ReleaseEmittersBuffer();
+			if (_initialized)
+				CleanUp();
 		}
 
 		#endregion
@@ -85,6 +86,13 @@ namespace Chimera
 			fluidTexture.Initialize();
 
 			_initialized = true;
+		}
+
+		void CleanUp() {
+
+			ReleaseEmittersBuffer();
+
+			_initialized = false;
 		}
 
 		#region Emitters
