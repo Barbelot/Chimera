@@ -24,13 +24,15 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
+    m_Ints: []
     m_Floats:
     - _K: 0.2
-    - _VelocityAttenuation: 0
-    - _Viscosity: 0.55
+    - _VelocityAttenuation: 0.001
+    - _Viscosity: 0.21
     - _Vorticity: 0.1
     - _dt: 0.15
     m_Colors: []
+  m_BuildTextureStacks: []
 --- !u!114 &4630554423636812818
 MonoBehaviour:
   m_ObjectHideFlags: 11

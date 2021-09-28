@@ -23,7 +23,7 @@
         float2 position;
         float4 color;
         float intensity;
-        float radiusPower;
+        float radius;
     };
 
     int _EmittersCount;
@@ -37,11 +37,11 @@
 		float tw = 1.0f / _CustomRenderTextureWidth;
 		float th = 1.0f / _CustomRenderTextureHeight;
 
-        float2 velo = tex2D(_FluidTex, uv).xy;
-        float4 col = tex2D(_SelfTexture2D, uv - _dt * velo * float2(tw, th) * 3.); //advection
+        float2 vel = tex2D(_FluidTex, uv).xy;
+        float4 col = tex2D(_SelfTexture2D, uv - _dt * vel * float2(tw, th) * 3.); //advection
 
         for (int i = 0; i < _EmittersCount; i++) {
-            col += _EmittersBuffer[i].color * _EmittersBuffer[i].intensity * .0025 / (0.0005 + pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower)) * _dt;
+            col += _EmittersBuffer[i].color * _EmittersBuffer[i].intensity * (1.0f - smoothstep(0, _EmittersBuffer[i].radius, distance(uv, _EmittersBuffer[i].position))) * _dt;
         }
 
         /* Decay to zero */

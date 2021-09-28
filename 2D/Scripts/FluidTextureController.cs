@@ -15,15 +15,19 @@ namespace Chimera
 		[Header("Fluid Parameters")]
 		[Range(0, 10)] public int updatesPerFrame = 4;
 
+		public enum UpdateMode { Update, FixedUpdate, LateUpdate }
+		public UpdateMode updateMode = UpdateMode.Update;
+
 		[Header("Debug")]
 		public bool reinitialize = false;
+		public bool showLogs = false;
 
 		public struct Emitter
 		{
 			public Vector2 position;
 			public Vector2 direction;
 			public float force;
-			public float radiusPower;
+			public float radius;
 			public float shape;
 		}
 
@@ -46,25 +50,18 @@ namespace Chimera
 		}
 
 		void Update() {
-			if (!_initialized) {
-				Initialize();
-				return;
-			}
+			if(updateMode == UpdateMode.Update)
+				UpdateFluid();
+		}
 
-			//Update shader time
-			fluidMaterial.SetFloat("_AbsoluteTime", Time.time);
+		void FixedUpdate() {
+			if (updateMode == UpdateMode.FixedUpdate)
+				UpdateFluid();
+		}
 
-			//Update emitters
-			UpdateEmittersBuffer();
-
-			//Update fluid texture
-			fluidTexture.Update(updatesPerFrame);
-
-			//Debug
-			if (reinitialize) {
-				fluidTexture.Initialize();
-				reinitialize = false;
-			}
+		void LateUpdate() {
+			if (updateMode == UpdateMode.LateUpdate)
+				UpdateFluid();
 		}
 
 		private void OnDisable() {
@@ -86,6 +83,32 @@ namespace Chimera
 			fluidTexture.Initialize();
 
 			_initialized = true;
+		}
+
+		void UpdateFluid() {
+
+			if (!_initialized) {
+				Initialize();
+				return;
+			}
+
+			//Update shader time
+			fluidMaterial.SetFloat("_AbsoluteTime", Time.time);
+
+			//Update emitters
+			UpdateEmittersBuffer();
+
+			//Update fluid texture
+			fluidTexture.Update(updatesPerFrame);
+
+			//Debug
+			if (reinitialize) {
+				fluidTexture.Initialize();
+				reinitialize = false;
+			}
+
+			if (showLogs)
+				DebugEmittersList();
 		}
 
 		void CleanUp() {
@@ -133,7 +156,7 @@ namespace Chimera
 				_emittersArray[i].position = _emittersList[i].position;
 				_emittersArray[i].direction = _emittersList[i].direction;
 				_emittersArray[i].force = _emittersList[i].force;
-				_emittersArray[i].radiusPower = _emittersList[i].forceRadiusPower;
+				_emittersArray[i].radius = _emittersList[i].forceRadius;
 				_emittersArray[i].shape = _emittersList[i].shape == FluidEmitter2D.EmitterShape.Directional ? 0 : 1;
 			}
 		}

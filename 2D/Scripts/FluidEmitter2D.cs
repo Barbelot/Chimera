@@ -9,6 +9,7 @@ namespace Chimera
 		public enum EmitterShape { Directional, Circular }
 		[Header("Shape")]
 		public EmitterShape shape = EmitterShape.Directional;
+		public bool normalizeDirection = false;
 
 		public enum PositionMapping { XY, XZ, YZ }
 		[Header("Position Mapping")]
@@ -18,14 +19,14 @@ namespace Chimera
 
 		[Header("Fluid Emitter")]
 		public string fluidControllerID;
-		public float force = 0.75f;
-		public float forceRadiusPower = 2.0f;
+		public float force = 1.0f;
+		public float forceRadius = 0.1f;
 
 		[Header("Color Emitter")]
 		public string advectionControllerID;
 		public Color color = Color.white;
-		public float intensity = 0.12f;
-		public float colorRadiusPower = 1.75f;
+		public float intensity = 1.0f;
+		public float colorRadius = 0.05f;
 
 		[Header("Gizmos")]
 		public bool showGizmos = true;
@@ -37,6 +38,9 @@ namespace Chimera
 		private AdvectionTextureController _advectionController;
 
 		private Vector3 _direction3D = Vector3.zero;
+		private Vector3 _previousPosition;
+
+		private bool _isPreviousPositionValid = false;
 
 		private void OnEnable() {
 
@@ -46,7 +50,20 @@ namespace Chimera
 
 		private void Update() {
 
-			UpdateEmitter();
+			if(_fluidController.updateMode == FluidTextureController.UpdateMode.Update)
+				UpdateEmitter();
+		}
+
+		private void FixedUpdate() {
+
+			if (_fluidController.updateMode == FluidTextureController.UpdateMode.FixedUpdate)
+				UpdateEmitter();
+		}
+
+		private void LateUpdate() {
+
+			if (_fluidController.updateMode == FluidTextureController.UpdateMode.LateUpdate)
+				UpdateEmitter();
 		}
 
 		private void OnDisable() {
@@ -99,29 +116,39 @@ namespace Chimera
 
 		void UpdateEmitter() {
 
+			if (!_isPreviousPositionValid) {
+				_previousPosition = transform.position;
+				_isPreviousPositionValid = true;
+				return;
+			}
+
+			_direction3D = transform.position - _previousPosition;
+
 			switch (positionMapping) {
 				case PositionMapping.XY:
 					position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
 					position.y = isCentered ? transform.position.y / size.y + 0.5f : transform.position.y / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.back);
+					_direction3D = normalizeDirection ? Vector3.ProjectOnPlane(_direction3D, Vector3.back).normalized : Vector3.ProjectOnPlane(_direction3D, Vector3.back);
 					direction.x = _direction3D.x;
 					direction.y = _direction3D.y;
 					break;
 				case PositionMapping.XZ:
 					position.x = isCentered ? transform.position.x / size.x + 0.5f : transform.position.x / size.x;
 					position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+					_direction3D = normalizeDirection ? Vector3.ProjectOnPlane(_direction3D, Vector3.up).normalized : Vector3.ProjectOnPlane(_direction3D, Vector3.up);
 					direction.x = _direction3D.x;
 					direction.y = _direction3D.z;
 					break;
 				case PositionMapping.YZ:
 					position.x = isCentered ? transform.position.y / size.x + 0.5f : transform.position.y / size.x;
 					position.y = isCentered ? transform.position.z / size.y + 0.5f : transform.position.z / size.y;
-					_direction3D = Vector3.ProjectOnPlane(transform.forward, Vector3.right);
+					_direction3D = normalizeDirection ? Vector3.ProjectOnPlane(_direction3D, Vector3.right).normalized : Vector3.ProjectOnPlane(_direction3D, Vector3.right);
 					direction.x = _direction3D.y;
 					direction.y = _direction3D.z;
 					break;
 			}
+
+			_previousPosition = transform.position;
 		}
 
 		void RemoveEmitter() {

@@ -24,7 +24,7 @@
 			float2 position;
 			float2 direction;
 			float force;
-			float radiusPower;
+			float radius;
 			float shape;
 		};
 
@@ -56,11 +56,11 @@
 			for (int i = 0; i < _EmittersCount; i++) {
 
 				if (_EmittersBuffer[i].shape == 0) {
-					newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
-				}
-				else {
-					newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * 0.001 / (pow(length(uv - _EmittersBuffer[i].position), _EmittersBuffer[i].radiusPower) + 0.0001);
-					//newForce *= length(uv - _EmittersBuffer[i].position) > 0.01 ? 1 : 0;
+					//Directional
+					newForce.xy += _EmittersBuffer[i].force * _EmittersBuffer[i].direction * (1.0f - smoothstep(0, _EmittersBuffer[i].radius, distance(uv, _EmittersBuffer[i].position)));
+				} else {
+					//Spherical
+					newForce.xy += _EmittersBuffer[i].force * normalize(uv - _EmittersBuffer[i].position) * (1.0f - smoothstep(0, _EmittersBuffer[i].radius, distance(uv, _EmittersBuffer[i].position)));
 				}
 			}
 

@@ -15,6 +15,9 @@ namespace Chimera
 		[Header("Advection Parameters")]
 		[Range(0, 10)] public int updatesPerFrame = 1;
 
+		public enum UpdateMode { Update, FixedUpdate, LateUpdate }
+		public UpdateMode updateMode = UpdateMode.Update;
+
 		[Header("Debug")]
 		public bool reinitialize = false;
 
@@ -23,7 +26,7 @@ namespace Chimera
 			public Vector2 position;
 			public Color color;
 			public float intensity;
-			public float radiusPower;
+			public float radius;
 		}
 
 		private const int _advectionEmitterSize = 8 * sizeof(float);
@@ -45,6 +48,42 @@ namespace Chimera
 		}
 
 		void Update() {
+			if (updateMode == UpdateMode.Update)
+				UpdateAdvection();
+		}
+
+		void FixedUpdate() {
+			if (updateMode == UpdateMode.FixedUpdate)
+				UpdateAdvection();
+		}
+
+		void LateUpdate() {
+			if (updateMode == UpdateMode.LateUpdate)
+				UpdateAdvection();
+		}
+
+		private void OnDisable() {
+
+			if (_initialized)
+				CleanUp();
+		}
+
+		#endregion
+
+		void Initialize() {
+
+			advectionMaterial = advectionTexture.material;
+
+			//Initialize emitters
+			InitializeEmitters();
+
+			//Initialize advection texture
+			advectionTexture.Initialize();
+
+			_initialized = true;
+		}
+
+		void UpdateAdvection() {
 			if (!_initialized) {
 				Initialize();
 				return;
@@ -63,24 +102,11 @@ namespace Chimera
 			}
 		}
 
-		private void OnDisable() {
+		void CleanUp() {
 
 			ReleaseEmittersBuffer();
-		}
 
-		#endregion
-
-		void Initialize() {
-
-			advectionMaterial = advectionTexture.material;
-
-			//Initialize emitters
-			InitializeEmitters();
-
-			//Initialize advection texture
-			advectionTexture.Initialize();
-
-			_initialized = true;
+			_initialized = false;
 		}
 
 		#region Emitters
@@ -121,7 +147,7 @@ namespace Chimera
 				_emittersArray[i].position = _emittersList[i].position;
 				_emittersArray[i].color = _emittersList[i].color;
 				_emittersArray[i].intensity = _emittersList[i].intensity;
-				_emittersArray[i].radiusPower = _emittersList[i].colorRadiusPower;
+				_emittersArray[i].radius = _emittersList[i].colorRadius;
 			}
 		}
 
